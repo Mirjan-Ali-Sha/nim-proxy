@@ -1,4 +1,4 @@
-# 🚀 nim-proxy
+# 🚀 NVIDIA NIM Proxy for Claude Code
 **Created By: [Mirjan Ali Sha](https://github.com/Mirjan-Ali-Sha)**
 
 A professional, high-performance drop-in replacement for the Anthropic API using NVIDIA NIM models. Optimized specifically for the **Claude Code CLI** and **VSCode tools**.

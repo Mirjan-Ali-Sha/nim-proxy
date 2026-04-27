@@ -31,6 +31,10 @@ cd nim-proxy
 pip install -e .
 ```
 
+```bash
+pip install nim-proxy
+```
+
 ### 2. Configure Your API Key (Must)
 Run the interactive config command:
 ```bash

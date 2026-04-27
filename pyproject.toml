@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nim-proxy"
+version = "1.0.0"
+description = "A drop-in NVIDIA NIM proxy for Claude Code CLI and VSCode"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Mirjan Ali Sha", email = "mastools.help@gmail.com"}
+]
+keywords = ["nvidia", "nim", "claude", "proxy", "ai", "llm", "Agent", "Code", "VSCode", "CLI"]
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "httpx>=0.26.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.2",
+    "pyjwt>=2.8.0",
+    "rich>=13.7.0"
+]
+
+[project.scripts]
+nim-proxy = "nim_proxy.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["nim_proxy*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.env.example"]

@@ -1,0 +1,11 @@
+include README.md
+include pyproject.toml
+recursive-include src/nim_proxy *.py
+
+exclude Dockerfile
+exclude .gitignore
+exclude PUBLISHING.md
+exclude .env
+recursive-exclude tests *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

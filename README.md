@@ -125,5 +125,12 @@ To update model mappings:
 nim-proxy config --opus deepseek-ai/deepseek-v4-pro --sonnet openai/gpt-oss-120b --haiku z-ai/glm-5.1 --fallback openai/gpt-oss-20b
 ```
 
+## ⚠️ Legal Disclaimer
+**PLEASE READ CAREFULLY.**
+
+1. **Use at Your Own Risk**: This tool is provided for educational and developmental purposes. The Author (Mirjan Ali Sha) assumes no responsibility for how this tool is used.
+2. **Third-Party Terms**: Users are strictly required to check and comply with the Licenses and Terms of Service of **NVIDIA NIM** and **Anthropic**. The Author is not responsible for any violations of these third-party agreements.
+3. **No Liability**: In no event shall the Author be liable for any claims, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software.
+
 ## 📜 License
-MIT
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full text and additional legal disclaimers.

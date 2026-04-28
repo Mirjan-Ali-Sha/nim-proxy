@@ -1,4 +1,4 @@
-# 🚀 NVIDIA NIM Proxy for Claude Code
+# 🚀 NVIDIA NIM Proxy for Claude Code [v1.1.0]
 **Created By: [Mirjan Ali Sha](https://github.com/Mirjan-Ali-Sha)**
 
 A professional, high-performance drop-in replacement for the Anthropic API using NVIDIA NIM models. Optimized specifically for the **Claude Code CLI** and **VSCode tools**.
@@ -7,7 +7,9 @@ A professional, high-performance drop-in replacement for the Anthropic API using
 - **🛡️ Privacy First**: 100% Locally hosted. No data tracking, no telemetry, and zero log retention.
 - **🪶 Ultra Lightweight**: Minimal footprint and dependency-light for maximum speed.
 - **⚡ Drop-in Compatible**: Mimics Anthropic's message protocol perfectly.
-- **🧠 Native Reasoning**: Streams live "Thinking" blocks from GLM and DeepSeek models.
+- **🔄 SSE Stability**: Advanced indexing system to prevent "Content block not found" errors during long reasoning steps.
+- **🧠 Native Reasoning**: Streams live "Thinking" blocks from GLM, DeepSeek, and specialized NIM models.
+- **🛠️ Sequential Tools**: Fixed tool-hanging issues by ensuring strict block termination and index alignment.
 - **🛡️ Robust Fallback**: Instantly retries if primary models fail.
 - **🔥 CLI Config**: Manage all your settings directly from your terminal.
 
@@ -43,9 +45,13 @@ nim-proxy config --key your_nvidia_api_key_here
 
 ### 3. Start the Server
 ```bash
+# Standard mode (Quiet)
 nim-proxy start
+
+# Debug mode (Shows request payloads)
+nim-proxy start --verbose
 ```
-The proxy will run at `http://localhost:8082`.
+The proxy will run at `http://localhost:8082` by default.
 
 ---
 
@@ -53,14 +59,14 @@ The proxy will run at `http://localhost:8082`.
 
 You need to point Claude Code to this proxy by setting the `ANTHROPIC_BASE_URL` and a dummy API Key.
 
-### Manual Setup
+### One-Liner Quick Connect
 #### Windows (PowerShell)
 ```bash
-$env:ANTHROPIC_AUTH_TOKEN="nim-proxy"; $env:ANTHROPIC_API_KEY="sk-ant-dummy"; $env:ANTHROPIC_BASE_URL="http://localhost:8082"; claude
+$env:ANTHROPIC_AUTH_TOKEN="nim-proxy"; $env:ANTHROPIC_BASE_URL="http://localhost:8082"; $env:ANTHROPIC_API_KEY="sk-ant-dummy"; claude
 ```
 #### MacOS / Linux (Bash/Zsh)
 ```bash
-export ANTHROPIC_AUTH_TOKEN="nim-proxy"; export ANTHROPIC_API_KEY="sk-ant-dummy"; export ANTHROPIC_BASE_URL="http://localhost:8082"; claude
+export ANTHROPIC_AUTH_TOKEN="nim-proxy" ANTHROPIC_BASE_URL="http://localhost:8082" ANTHROPIC_API_KEY="sk-ant-dummy"; claude
 ```
 
 ### Windows (PowerShell) - Permanent Setup

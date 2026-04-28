@@ -24,6 +24,22 @@ class SSEBuilder:
         self.next_index += 1
         return res
 
+    def start_text_block(self) -> str:
+        return self.content_block_start(self.next_index, "text")
+
+    def stop_text_block(self) -> str:
+        res = self.content_block_stop(self.next_index)
+        self.next_index += 1
+        return res
+
+    def start_tool_block(self, id: str, name: str) -> str:
+        return self.content_block_start(self.next_index, "tool_use", id=id, name=name)
+
+    def stop_tool_block(self) -> str:
+        res = self.content_block_stop(self.next_index)
+        self.next_index += 1
+        return res
+
     def message_start(self) -> str:
         return self.format_event(
             "message_start",

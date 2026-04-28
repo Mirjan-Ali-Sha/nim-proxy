@@ -18,12 +18,13 @@ class Settings(BaseSettings):
     # Defaults
     DEFAULT_TEMPERATURE: float = 1.0
     DEFAULT_TOP_P: float = 1.0
-    DEFAULT_MAX_TOKENS: int = 16384
+    DEFAULT_MAX_TOKENS: int = 65536
     DEFAULT_REASONING_EFFORT: str = "medium"
 
     # Behavior
     ENABLE_OPTIMIZATIONS: bool = True
     ENABLE_THINKING: bool = True
+    VERBOSE: bool = False
     
     HOST: str = "0.0.0.0"
     PORT: int = 8082

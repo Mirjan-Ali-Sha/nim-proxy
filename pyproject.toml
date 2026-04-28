@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nim-proxy"
-version = "1.0.0"
+version = "1.1.0"
 description = "A drop-in NVIDIA NIM proxy for Claude Code CLI and VSCode"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -68,6 +68,9 @@ async def create_message(request: Request):
     claude_model = body.get("model", "")
     nim_model = ModelRouter.resolve(claude_model)
     logger.info(f"Routing {claude_model} -> {nim_model}")
+    
+    messages = body.get("messages", [])
+    logger.info(f"Context: {len(messages)} messages (approx. {sum(len(str(m.get('content',''))) for m in messages)//4} tokens)")
 
     # 3. Handle Streaming
     stream = body.get("stream", False)
@@ -154,14 +157,24 @@ async def create_message(request: Request):
         sse = SSEBuilder(message_id, claude_model)
         yield sse.message_start()
         
-        state = {"text_started": False, "index": 0}
+        state = {"text_started": False, "tool_active": False, "tool_map": {}}
         fallback_triggered = False
         
         async def handle_stream(s):
+            first_chunk = True
             async for chunk in s:
                 if "error" in chunk:
                     yield chunk
                     break
+                
+                if first_chunk:
+                    choices = chunk.get("choices", [])
+                    if choices:
+                        delta = choices[0].get("delta", {})
+                        preview = delta.get("content") or delta.get("reasoning_content") or "Tool Call/Other"
+                        logger.info(f"Response started: {str(preview)[:50]}...")
+                    first_chunk = False
+
                 events = process_chunk(chunk, sse, state)
                 for event in events:
                     yield event
@@ -181,8 +194,17 @@ async def create_message(request: Request):
                     break
             yield item
 
-        if state["text_started"]:
-            yield sse.content_block_stop(state["index"])
+        # Finalize any open blocks
+        if sse.thinking_started:
+            if state["text_started"]:
+                yield sse.content_block_delta(sse.next_index, "text_delta", "\n</think>\n\n")
+            else:
+                yield sse.stop_thinking_block()
+        elif state["text_started"]:
+            yield sse.stop_text_block()
+        elif state["tool_active"]:
+            yield sse.stop_tool_block()
+
         yield sse.message_delta("end_turn")
         yield sse.message_stop()
 
@@ -197,53 +219,72 @@ async def create_message(request: Request):
         reasoning = delta.get("reasoning_content")
         if reasoning:
             if not sse.thinking_started:
-                if not state["text_started"]:
+                if not state["text_started"] and not state["tool_active"]:
                     events.append(sse.start_thinking_block())
-                    sse.thinking_started = True 
                 else:
-                    events.append(sse.content_block_delta(state["index"], "text_delta", f"\n<think>\n{reasoning}"))
+                    # If we were in text or tool, close them? Actually NIM models don't interleave reasoning
+                    # but if they did, we'd fallback to thinking tags
+                    events.append(sse.content_block_delta(sse.next_index, "text_delta", f"\n<think>\n{reasoning}"))
+                    sse.thinking_started = True
                     return events
             
             if sse.thinking_started:
                 if state["text_started"]:
-                    events.append(sse.content_block_delta(state["index"], "text_delta", reasoning))
+                    events.append(sse.content_block_delta(sse.next_index, "text_delta", reasoning))
                 else:
                     events.append(sse.emit_thinking_delta(reasoning))
 
         # 2. Handle Tool Calls
         tool_calls = delta.get("tool_calls")
         if tool_calls:
+            # Close thinking/text if active
             if sse.thinking_started:
                 if state["text_started"]:
-                    events.append(sse.content_block_delta(state["index"], "text_delta", "\n</think>\n\n"))
+                    events.append(sse.content_block_delta(sse.next_index, "text_delta", "\n</think>\n\n"))
                 else:
                     events.append(sse.stop_thinking_block())
-                    state["index"] += 1
-                sse.thinking_started = False
-            
+            elif state["text_started"]:
+                events.append(sse.stop_text_block())
+                state["text_started"] = False
+
             for tc in tool_calls:
-                if tc.get("id"):
-                    events.append(sse.content_block_start(state["index"], "tool_use", id=tc["id"], name=tc["function"].get("name", "")))
-                if tc["function"].get("arguments"):
-                    events.append(sse.content_block_delta(state["index"], "input_json_delta", tc["function"]["arguments"]))
+                idx = tc.get("index", 0)
+                if idx not in state["tool_map"]:
+                    # Close previous tool if active
+                    if state["tool_active"]:
+                        events.append(sse.stop_tool_block())
+                    
+                    t_id = tc.get("id")
+                    if t_id:
+                        t_name = tc["function"].get("name", "")
+                        state["tool_map"][idx] = {"id": t_id, "index": sse.next_index}
+                        events.append(sse.start_tool_block(t_id, t_name))
+                        state["tool_active"] = True
+                
+                if idx in state["tool_map"]:
+                    args = tc["function"].get("arguments")
+                    if args:
+                        events.append(sse.content_block_delta(state["tool_map"][idx]["index"], "input_json_delta", args))
             return events
 
         # 3. Handle Content
         content = delta.get("content")
         if content:
+            # Close thinking/tool if active
             if sse.thinking_started:
                 if state["text_started"]:
-                    events.append(sse.content_block_delta(state["index"], "text_delta", "\n</think>\n\n"))
+                    events.append(sse.content_block_delta(sse.next_index, "text_delta", "\n</think>\n\n"))
                 else:
                     events.append(sse.stop_thinking_block())
-                    state["index"] += 1
-                sse.thinking_started = False
+            elif state["tool_active"]:
+                events.append(sse.stop_tool_block())
+                state["tool_active"] = False
             
             if not state["text_started"]:
-                events.append(sse.content_block_start(state["index"], "text"))
+                events.append(sse.start_text_block())
                 state["text_started"] = True
             
-            events.append(sse.content_block_delta(state["index"], "text_delta", content))
+            events.append(sse.content_block_delta(sse.next_index, "text_delta", content))
 
         return events
 

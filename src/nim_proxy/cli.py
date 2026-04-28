@@ -9,8 +9,9 @@ from .config import settings, save_config
 console = Console()
 
 def show_welcome():
-    welcome_text = """
-    🚀 NVIDIA NIM Proxy for Claude Code
+    version = "1.1.0"
+    welcome_text = f"""
+    🚀 NVIDIA NIM Proxy for Claude Code [bold cyan]v{version}[/bold cyan]
     [dim]Created By: Mirjan Ali Sha[/dim]
     
     Translate Anthropic API calls to NVIDIA NIM instantly.
@@ -48,6 +49,7 @@ def main():
     start_parser = subparsers.add_parser("start", help="Launch the proxy server (Drop-in Anthropic API)")
     start_parser.add_argument("--port", type=int, default=8082, help="Port to run on (default: 8082)")
     start_parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to (use 127.0.0.1 for local only)")
+    start_parser.add_argument("--verbose", action="store_true", help="Show detailed NIM request payloads for debugging")
 
     # Config command
     config_parser = subparsers.add_parser("config", help="Update proxy settings (API keys, model mappings, and generation defaults)")
@@ -72,8 +74,23 @@ def main():
     if args.command == "start":
         import uvicorn
         from .server import app
+        if args.verbose:
+            settings.VERBOSE = True
+        from rich.rule import Rule
+        
         show_welcome()
         console.print(f"Starting server on {args.host}:{args.port}...")
+        
+        # Truly responsive connection help
+        console.print("")
+        console.print(Rule("[bold cyan]Connect Claude Code[/bold cyan]", align="center", style="cyan"))
+        console.print("[bold yellow]Windows (PowerShell):[/bold yellow]")
+        console.print(f'$env:ANTHROPIC_AUTH_TOKEN="nim-proxy"; $env:ANTHROPIC_BASE_URL="http://localhost:{args.port}"; $env:ANTHROPIC_API_KEY="sk-ant-dummy"; claude', soft_wrap=True)
+        console.print("\n[bold yellow]Linux/macOS (Bash):[/bold yellow]")
+        console.print(f'export ANTHROPIC_AUTH_TOKEN="nim-proxy" ANTHROPIC_BASE_URL="http://localhost:{args.port}" ANTHROPIC_API_KEY="sk-ant-dummy"; claude', soft_wrap=True)
+        console.print(Rule(style="cyan"))
+        console.print("")
+
         uvicorn.run(app, host=args.host, port=args.port)
 
     elif args.command == "config":

@@ -25,6 +25,12 @@ class NIMProvider:
         if tools:
             payload["tools"] = tools
 
+        # Remove any anthropic-specific flags that might have leaked into kwargs
+        payload.pop("beta", None)
+        
+        if settings.VERBOSE:
+            logger.debug(f"NIM Request Payload: {json.dumps({k:v for k,v in payload.items() if k != 'messages'}, indent=2)}")
+        
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
                 async with client.stream("POST", f"{self.base_url}/chat/completions", json=payload, headers=headers) as response:
@@ -61,6 +67,10 @@ class NIMProvider:
         }
         if tools:
             payload["tools"] = tools
+
+        payload.pop("beta", None)
+        if settings.VERBOSE:
+            logger.debug(f"NIM Request Payload: {json.dumps({k:v for k,v in payload.items() if k != 'messages'}, indent=2)}")
 
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
